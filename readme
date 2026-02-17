@@ -1,0 +1,8 @@
+Rules of REST API
+1. Data is passed as key-value pairs
+---When sedning data from Javascript, it is sent as json 
+---When sending data from python it is sent as a dictionary
+
+2. Define routes/URL
+3. You must define a HTTP method e.g GET, POST, PUT, DELETE, PATCH
+4. You must write a status code (404, 403, 200, 201, 500)
