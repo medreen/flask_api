@@ -6,3 +6,8 @@ Rules of REST API
 2. Define routes/URL
 3. You must define a HTTP method e.g GET, POST, PUT, DELETE, PATCH
 4. You must write a status code (404, 403, 200, 201, 500)
+
+SQLACHEMY is an ORM - Object relational Map
+ORM - help execute queries using methods
+We define the table structure in classes /models.
+
