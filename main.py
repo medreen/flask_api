@@ -1,58 +1,61 @@
-from flask import Flask, jsonify, request
-from sqlalchemy import create_engine, select
+import select
+
+from flask import Flask, request, jsonify
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database import Base, User
+from database import User, db
 
 app = Flask(__name__)
 
-DATABASE_URL = "postgresql+psycopg2://postgres:Colesprouse2311!@localhost:5432/flask_api"
-engine = create_engine(DATABASE_URL, echo=False)
+alloweed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
+DATABASE_URL = "postgresql+psycopg2://postgres:Colesprouse2311!@localhost:5432/vue_myduka"
+
+# Connect to the database using sqlalchemy
+engine = create_engine(DATABASE_URL, echo=True)
+
+# Create a session to call query methods
 session = sessionmaker(bind=engine)
 my_session = session()
 
-Base.metadata.create_all(engine)
+# Create the tables in the database
+db.metadata.create_all(engine)
 
-allowed_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 
-@app.route("/", methods = allowed_methods)
+
+@app.route("/", methods=alloweed_methods)
 def home():
-    method = request.method.lower()
-    if method == "get":
-        return jsonify({"Flask API Version" : "1.0"}),200
+    if request.method == "GET":
+        msg = { "Flask API Version" : "1.0" }
+        return jsonify(msg), 200
     else:
-        return jsonify({"message": "Method not allowed"}),405
-    
-@app.route("/users", methods = allowed_methods)
-def users():
-    try:
-        method = request.method.lower()
-        if method == "get":
-            users_list = []
-            query = select(User)
-            my_users = list(my_session.scalars(query).all())
+        return jsonify({"error": "Method not allowed"}), 405
 
-            for user in my_users:
-                users_list.append({"id": user.id,
-                                    "name": user.name,
-                                    "location": user.location})
 
-            return jsonify({"data": users_list}), 200
-        elif method == "post":
-            data = request.get_json()
-            if data["name"] == "" or data["location"] == "":
-                return jsonify({"message": "name and location fields required."}), 403
-            else:
-                #users_list.append(data)                                
-                new_user = User(name = data["name"], location = data["location"])
-                my_session.add(new_user)
-                my_session.commit()
-                return jsonify({"message": "Successfully added users"}), 201
+@app.route("/user")
+def user():
+    if request.method.upper() == "GET":
+        # return a list of all users in the database
+        query = select(User)
+        users = my_session.scalars(query).all()
+        data = []
+
+        for user in users:
+            data.append({
+                "id": user.id,
+                "name": user.name,
+                "location": user.location
+            })
+        return jsonify({ "data": data })
+    elif request.method.upper() == "POST":
+        data = request.get_json()
+        if data["Name"] == "" or data["Location"] == "":
+            return jsonify({ "error": "Name and Location cannot be empty" }), 400
         else:
-            return jsonify({"message": "Methods not allowed."}), 405
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500    
-
-
+            new_user = User(name=data["Name"], location=data["Location"])
+            my_session.add(new_user)
+            my_session.commit()
+            return jsonify({ "message": f"User created successfully{data['name']}" }), 201
+    
 app.run(debug=True)
