@@ -7,26 +7,26 @@ class Base(DeclarativeBase):
     pass
 
 class User(Base):
-    __tablename__ = "Users"
+    __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    # user_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+
     # Relationship
-    budgets = relationship("User_Budget", back_populates="Users")
+    budgets = relationship("Budget", back_populates="user")
 
 class Budget(Base):
-    __tablename__ = "User_Budget"
-
+    __tablename__ = "budgets"  
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(50), nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    # Foreign Key
-    user_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
-    # Relationship
-    user = relationship("Users", back_populates="User_Budgets")
+    user = relationship("User", back_populates="budgets")
+   

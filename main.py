@@ -91,7 +91,7 @@ def login():
                  user = db_session.query(User).filter_by(email=email).first()
 
                  if user and bcrypt.check_password_hash(user.password, password):        
-                    token = create_access_token(identity=new_user.email)
+                    token = create_access_token(identity=user.email)
 
                     return jsonify({
                         "message": "Login successful!",
@@ -100,7 +100,8 @@ def login():
         else: 
             return jsonify({"message": "Method not allowed"})
 
-    except Exception as e:        
+    except Exception as e:  
+        db_session.rollback()       
         return jsonify({"error": str(e)}), 500
 
 @app.route('/budget', methods=allowed_methods)
@@ -110,9 +111,9 @@ def budget():
         if request.method == "POST":            
             print("JWT identity:", get_jwt_identity())
 
-            current_email = get_jwt_identity()
+            current_user_email = get_jwt_identity()
         
-            if current_email:                  
+            if current_user_email:                  
                 data = request.get_json()
             else: 
                 return jsonify({"error": "Unauthorized User"}), 401
@@ -133,7 +134,7 @@ def budget():
                 except:
                     return jsonify({"error": "Invalid date format"}), 400
 
-                user = db_session.query(User).filter_by(username=current_username).first()
+                user = db_session.query(User).filter_by(email=current_user_email).first()
 
                 new_budget = Budget(
                     title=title,
