@@ -109,7 +109,7 @@ def login():
 def budget():
     try:
         if request.method == "POST":            
-            print("JWT identity:", get_jwt_identity())
+            # print("JWT identity:", get_jwt_identity())
 
             current_user_email = get_jwt_identity()
         
@@ -131,8 +131,9 @@ def budget():
             else:    
                 try:
                     date_obj = datetime.strptime(date, "%Y-%m-%d")
-                except:
-                    return jsonify({"error": "Invalid date format"}), 400
+                except Exception as e:
+                    return jsonify({"error": "Invalid date format",
+                    "details": str(e)}), 400
 
                 user = db_session.query(User).filter_by(email=current_user_email).first()
 
@@ -151,27 +152,34 @@ def budget():
            
 
         elif request.method == "GET":            
-            current_email = get_jwt_identity()
+            current_user_email = get_jwt_identity()
 
-            user = db_session.query(User).filter_by(email=current_email).first()
+            user = db_session.query(User).filter_by(email=current_user_email).first()
 
             budgets = db_session.query(Budget).filter_by(user_id=user.id).all()
 
-            for b in budgets:
-                return jsonify([                    
-                    {
-                        "id": b.id,
-                        "title": b.title,
-                        "amount": b.amount,
-                        "date": b.date.strftime("%Y-%m-%d")
-                    } 
-                ])
+            if not budgets:
+                return jsonify({"message": "No budgets found", "budgets": []}), 404
+
+            budget_list = []
+            for budget in budgets:
+                 budget_list.append({                        
+                        "title": budget.title,
+                        "amount": budget.amount,
+                        "date": budget.date,
+                        "user_id": budget.user_id
+                    })
+            return jsonify({"message": "Budgets retrieved successfully",
+            "budgets": budget_list}), 200   
         else:
             return jsonify({"message": "Method not allowed"}), 405
 
     except Exception as e:        
-        return jsonify({"error": str(e)}), 500
-
+       db_session.rollback()
+       return jsonify({
+            "message": "Failed to add budget",
+            "error": str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
