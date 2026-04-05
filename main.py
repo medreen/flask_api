@@ -78,25 +78,26 @@ def login():
         if request.method == "POST":            
             data = request.get_json()
 
-            if data:               
+            if not data:  
+                return jsonify({"message": "Request body is empty"}), 400           
+                       
+            else:
                 email = data.get('email')
-                password = data.get('password')           
-            else:
-                return jsonify({"message": "Request body is empty"}), 400
+                password = data.get('password')
             
-            if password == '' or email == '':
-                return jsonify({"error": "All fields required!"}), 400
-            else:
-                 email = email.lower()
-                 user = db_session.query(User).filter_by(email=email).first()
+                if password == '' or email == '':
+                    return jsonify({"error": "All fields required!"}), 400
+                else:
+                    email = email.lower()
+                    user = db_session.query(User).filter_by(email=email).first()
 
-                 if user and bcrypt.check_password_hash(user.password, password):        
-                    token = create_access_token(identity=user.email)
+                    if user and bcrypt.check_password_hash(user.password, password):        
+                        token = create_access_token(identity=user.email)
 
-                    return jsonify({
-                        "message": "Login successful!",
-                        "token": token
-                    }), 201
+                        return jsonify({
+                            "message": "Login successful!",
+                            "token": token
+                        }), 201
         else: 
             return jsonify({"message": "Method not allowed"})
 
@@ -104,8 +105,8 @@ def login():
         db_session.rollback()       
         return jsonify({"error": str(e)}), 500
 
-@app.route('/budget', methods=allowed_methods)
-@jwt_required()
+@app.route("/budget", methods=allowed_methods)
+# @jwt_required()
 def budget():
     try:
         if request.method == "POST":            
@@ -122,7 +123,8 @@ def budget():
                 title = data.get("title")              
                 amount = data.get('amount')
                 date = data.get('date')   
-                
+                user_id = data.get('user_id')
+                id = data.get('id')
             else:
                 return jsonify({"message": "Request body is empty"}), 400
 
@@ -138,6 +140,7 @@ def budget():
                 user = db_session.query(User).filter_by(email=current_user_email).first()
 
                 new_budget = Budget(
+                    id=id,
                     title=title,
                     amount=float(amount),
                     date=date_obj,
@@ -163,7 +166,8 @@ def budget():
 
             budget_list = []
             for budget in budgets:
-                 budget_list.append({                        
+                 budget_list.append({ 
+                        "id": budget.id,                       
                         "title": budget.title,
                         "amount": budget.amount,
                         "date": budget.date,
